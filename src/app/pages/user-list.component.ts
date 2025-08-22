@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { UserService, User } from './user.service';
+
+import { User } from './../models/user.model';            // updated path
+import { UserService } from './../services/user.service'; // updated path
 
 @Component({
   standalone: true,
   selector: 'app-user-list',
   imports: [CommonModule, RouterLink],
   template: `
-    <h2>Employees</h2>
+   <h2>Employees</h2>
     <ul>
       <li *ngFor="let u of users">
         <img [src]="u.picture.thumbnail" alt="photo">
@@ -26,6 +28,7 @@ import { UserService, User } from './user.service';
     </ul>
   `
 })
+
 export class UserListComponent implements OnInit {
   users: User[] = [];
   favourites: User[] = [];
