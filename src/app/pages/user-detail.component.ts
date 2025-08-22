@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { UserService, User } from './user.service';
+
+import { User } from './../models/user.model';            // updated path
+import { UserService } from './../services/user.service'; // updated path
 
 @Component({
   standalone: true,

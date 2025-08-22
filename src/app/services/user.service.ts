@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-
-export interface User {
-  name: { first: string; last: string };
-  email: string;
-  login: { uuid: string };
-  picture: { thumbnail: string; large?: string };
-}
+import { User } from '../models/user.model'; // updated path
 
 @Injectable({ providedIn: 'root' })
+
 export class UserService {
   constructor(private http: HttpClient) {}
 
@@ -19,6 +14,7 @@ export class UserService {
   getByIdFromCache(id: string | null): User | undefined {
     if (!id) return undefined;
     return this._usersCache.find(u => u.login.uuid === id);
+
   }
 
   // Get 10 users from the API
