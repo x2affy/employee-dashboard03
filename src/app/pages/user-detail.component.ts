@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-
-import { User } from './../models/user.model';            // updated path
-import { UserService } from './../services/user.service'; // updated path
+import { User } from './../models/user.model';
+import { UserService } from './../services/user.service';
+import { FavouritesService } from './../services/favourites.service';
 
 @Component({
   standalone: true,
@@ -18,20 +18,35 @@ import { UserService } from './../services/user.service'; // updated path
       <p>Name: {{ user.name.first }} {{ user.name.last }}</p>
       <p>Email: {{ user.email }}</p>
       <img *ngIf="user.picture?.large" [src]="user.picture.large" alt="photo">
+      <button (click)="toggleFav()" [attr.aria-pressed]="isFav ? 'true' : 'false'">
+        {{ isFav ? '★ Favourite' : '☆ Add to favourites' }}
+      </button>
     </ng-container>
 
-    <!-- If not in cache (e.g., you refreshed on the detail URL), tell the user to go back -->
     <ng-template #notFound>
-      <p>User not found. Try going back to the list and clicking Details again.</p>
+      <p>User not found. Go back to the list and click Details again.</p>
     </ng-template>
   `
 })
 export class UserDetailComponent {
   user?: User;
+  isFav = false;
 
-  constructor(route: ActivatedRoute, private service: UserService) {
+  constructor(route: ActivatedRoute, private users: UserService, private favs: FavouritesService) {
+    
     // Grab the :id from the URL and look it up from the cached list
     const id = route.snapshot.paramMap.get('id');
-    this.user = this.service.getByIdFromCache(id);
+    const found = this.users.getByIdFromCache(id);
+  
+    if (found) {
+      this.user = found;
+      this.isFav = this.favs.isFavourite(found.login.uuid);
+    }
+  }
+
+  toggleFav() {
+    if (!this.user) return;
+    this.favs.toggle(this.user.login.uuid);
+    this.isFav = this.favs.isFavourite(this.user.login.uuid);
   }
 }
