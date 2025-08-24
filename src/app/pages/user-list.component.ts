@@ -1,21 +1,38 @@
-// Shows: loading skeletons + a loading bar while fetching,
-// and a friendly error panel with a Retry button if the API fails.
+// The list page with:
+// - a search box to filter employees
+// - loading skeletons + error + retry
+// - favourites toggle
+// - a Refresh button to intentionally regenerate a new list
 
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 import { User } from './../models/user.model';
 import { UserService } from './../services/user.service';
+import { FavouritesService } from './../services/favourites.service';
 
 @Component({
   standalone: true,
   selector: 'app-user-list',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <h2>Employees</h2>
+    <!-- Title row with Refresh button -->
+    <h2 style="display:flex; justify-content:space-between; align-items:center;">
+      Employees
+      <button (click)="refreshList()">Refresh</button>
+    </h2>
 
-    <!-- Top loading bar (simple, visible only while loading) -->
+    <!-- Search input bound to 'filter' property -->
+    <input
+      type="search"
+      placeholder="Search by name..."
+      [(ngModel)]="filter"
+      style="margin-bottom: 1rem; padding: 6px; width: 100%; max-width: 300px;"
+    />
+
+    <!-- Top loading bar -->
     <div class="top-loader" *ngIf="loading"></div>
 
     <!-- Error panel with Retry -->
@@ -27,7 +44,7 @@ import { UserService } from './../services/user.service';
       <button (click)="loadUsers()">Retry</button>
     </div>
 
-    <!-- Loading state: show skeleton placeholders -->
+    <!-- Skeletons while loading -->
     <ul *ngIf="loading && !error" class="list">
       <li *ngFor="let i of skeletons" class="row">
         <div class="avatar skeleton"></div>
@@ -39,22 +56,27 @@ import { UserService } from './../services/user.service';
       </li>
     </ul>
 
-    <!-- Loaded state -->
+    <!-- Loaded state: shows the filtered list of employees -->
     <ul *ngIf="!loading && !error" class="list">
-      <li *ngFor="let u of users" class="row">
+      <li *ngFor="let u of filteredUsers" class="row">
         <img [src]="u.picture.thumbnail" alt="photo" class="avatar">
         <span class="name">{{ u.name.first }} {{ u.name.last }}</span>
         <a [routerLink]="['/employee', u.login.uuid]">Details</a>
-        <button (click)="toggleFavourite(u)" aria-label="Toggle favourite">★</button>
+        <!-- Favourite toggle (★ if favourite, ☆ if not) -->
+        <button (click)="toggleFavourite(u)" [attr.aria-pressed]="isFavourite(u) ? 'true' : 'false'">
+          {{ isFavourite(u) ? '★' : '☆' }}
+        </button>
       </li>
+      <li *ngIf="!filteredUsers.length" class="muted">No employees match your search.</li>
     </ul>
 
+    <!-- Favourites list -->
     <h3>Favourites</h3>
     <ul class="list small">
-      <li *ngFor="let f of favourites" class="row">
+      <li *ngFor="let f of favouriteUsers" class="row">
         <span class="name">{{ f.name.first }} {{ f.name.last }}</span>
       </li>
-      <li *ngIf="!favourites.length" class="muted">No favourites yet.</li>
+      <li *ngIf="!favouriteUsers.length" class="muted">No favourites yet.</li>
     </ul>
   `,
   styles: [`
@@ -91,38 +113,57 @@ import { UserService } from './../services/user.service';
   `]
 })
 export class UserListComponent implements OnInit {
-  users: User[] = [];
-  favourites: User[] = [];
+  users: User[] = [];        // list of employees
+  loading = false;           // true while fetching
+  error = '';                // error message text
+  skeletons = Array.from({ length: 8 }); // fake rows for skeleton loading
+  filter = '';               // search input text
 
-  loading = false;      // true while fetching
-  error = '';           // error message (empty means no error)
-  skeletons = Array.from({ length: 8 }); // 8 skeleton rows
-
-  constructor(private service: UserService) {}
+  constructor(
+    private usersSvc: UserService,
+    private favs: FavouritesService
+  ) {}
 
   ngOnInit() {
-    this.loadUsers(); // fetch on first load
+    this.loadUsers(); // fetch or reuse cached users
   }
 
+  // Normal load (cache-or-fetch)
   loadUsers() {
     this.loading = true;
     this.error = '';
-    this.service.getUsers().subscribe({
-      next: (data) => {
-        this.users = data.results;
-        this.service.setCache(this.users); // keep for detail page
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Please check your internet connection and try again.';
-        this.loading = false;
-      }
+    this.usersSvc.getOrFetchUsers().subscribe({
+      next: (list) => { this.users = list; this.loading = false; },
+      error: () => { this.error = 'Please check your internet connection and try again.'; this.loading = false; }
     });
   }
 
-  toggleFavourite(user: User) {
-    this.favourites = this.favourites.includes(user)
-      ? this.favourites.filter(f => f !== user)
-      : [...this.favourites, user];
+  // 🔄 Refresh button: force new seed + new list
+  refreshList() {
+    this.loading = true;
+    this.error = '';
+    this.usersSvc.refreshUsers().subscribe({
+      next: (list) => { this.users = list; this.loading = false; },
+      error: () => { this.error = 'Could not refresh employees.'; this.loading = false; }
+    });
+  }
+
+  // Apply search filter
+  get filteredUsers(): User[] {
+    if (!this.filter.trim()) return this.users;
+    const term = this.filter.toLowerCase();
+    return this.users.filter(u =>
+      `${u.name.first} ${u.name.last}`.toLowerCase().includes(term)
+    );
+  }
+
+  // Favourites via service
+  toggleFavourite(u: User) { this.favs.toggle(u.login.uuid); }
+  isFavourite(u: User) { return this.favs.isFavourite(u.login.uuid); }
+
+  // Build a list of favourite users (subset of current users)
+  get favouriteUsers(): User[] {
+    const favIds = new Set(this.favs.all());
+    return this.users.filter(u => favIds.has(u.login.uuid));
   }
 }
