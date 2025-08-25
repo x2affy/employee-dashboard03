@@ -81,7 +81,7 @@ This keeps the project tidy and helps new developers find things quickly.
 
 ## Additional (Bonus)
 
-1. Unit Tests
+## 1. Unit Tests
 Had plenty of fun trying to setup jest, im sure more difficult that needed to be: !
 In the end used the following site to configure jest.
 
@@ -90,41 +90,41 @@ https://dev.to/fransaoco/how-to-set-up-jest-in-angular-19-step-by-step-guide-1c2
 Added a simple test for the favourites service.
 
 
-2. In your README, briefly discuss how you would handle performance if the list contained 10,000 employees.
+## 2. In your README, briefly discuss how you would handle performance if the list contained 10,000 employees.
 
-### Pagination
+## Pagination
 
-## API
+### API
 In this case i would have a backend api to support the load with a simple api endpoint to help with pagination.
 A simple endpoint such as :-
         GET /api/employees?page=1&pagesize=100@search=name@sort=lastname&dir=asc
 
 These are a few of the params you might have and not limited to.
 
-## Storage
+### Storage
 Depending on what db you are using, model the employees with required fields.
     - id, firstname, lastname, email, city, country, createdat, etc
 
 Ensure you have the 10k+ employees to test the performance.
 
-## Index
+### Index
 A small chnage but big wins.
 Index the common fields that you will be searching on such as firstname, lastname
 
-## Pagination Method
+### Pagination Method
 You can start with page+pagesize, its simple for demoing this concept.
 For scale: You can move to cursor paging but requires at stable sortkey i.e: id, created_at
 
-## Implement filtering and sorting
+### Implement filtering and sorting
 Normalise the search term so by i.e.: trim, lowercase
 Aim to filter on first or lastname for the contains serach
 Keep the sort simple with set asc|desc
 
-## Response
+### Response
 Only return what is requested and displayed and not all the data
 Include the total and the hasMore in the json returened so the UI knows whether to load more.
 
-## UI
+### UI
 The remainder would be hoking up the ui to the endpoint  with the correct params needed.
 Keep a track of the page, pagesize and search in the state
 Debounce the search box, so not every hit spams the backend.
