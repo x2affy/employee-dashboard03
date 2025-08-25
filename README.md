@@ -125,10 +125,11 @@ Only return what is requested and displayed and not all the data
 Include the total and the hasMore in the json returened so the UI knows whether to load more.
 
 ### UI
-The remainder would be hoking up the ui to the endpoint  with the correct params needed.
+The remainder would be hooking up the ui to the endpoint  with the correct params needed.
 Keep a track of the page, pagesize and search in the state
 Debounce the search box, so not every hit spams the backend.
 This will reduce server load and excess traffic
 Render the list from the server and show the Load More buttom if hsMore is true.
 
 
+.
