@@ -1,4 +1,4 @@
-// A simple description of the user object we care about.
+// A description of the user object
 export interface User {
   name: { first: string; last: string };
   email: string;
