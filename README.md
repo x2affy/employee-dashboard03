@@ -28,11 +28,11 @@ https://chromewebstore.google.com/detail/angular-devtools/ienfalfjdbdpebioblfack
 
 4. Routes:
 
-    / — employee list
-    /employee/:id — detail
-    /favourites — favourites page
+       / — employee list
+       /employee/:id — detail
+       /favourites — favourites page
 
-5.  Build for production
+6.  Build for production
 ```bash
    ng build
 ```
