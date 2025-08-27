@@ -13,10 +13,15 @@ import { User } from './../models/user.model';
 import { UserService } from './../services/user.service';
 import { FavouritesService } from './../services/favourites.service';
 
+import { TopLoaderComponent } from './../components/top-loader.component';
+import { SearchBarComponent } from './../components/search-bar.component';
+import { ErrorPanelComponent } from './../components/error-panel.component';
+
+
 @Component({
   standalone: true,
   selector: 'app-user-list',
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, TopLoaderComponent, SearchBarComponent,ErrorPanelComponent],
   template: `
     <!-- Title row with Refresh button -->
     <h2 style="display:flex; justify-content:space-between; align-items:center;">
@@ -24,25 +29,14 @@ import { FavouritesService } from './../services/favourites.service';
       <button (click)="refreshList()">Refresh</button>
     </h2>
 
-    <!-- Search input bound to 'filter' property -->
-    <input
-      type="search"
-      placeholder="Search by name..."
-      [(ngModel)]="filter"
-      style="margin-bottom: 1rem; padding: 6px; width: 100%; max-width: 300px;"
-    />
+    <!-- Search -->
+    <app-search-bar [(value)]="filter" placeholder="Search by name..."></app-search-bar>
 
     <!-- Top loading bar -->
-    <div class="top-loader" *ngIf="loading"></div>
+    <app-top-loader [show]="loading"></app-top-loader>
 
     <!-- Error panel with Retry -->
-    <div class="error" *ngIf="error">
-      <div>
-        <strong>We couldn't load employees.</strong>
-        <div class="muted">{{ error }}</div>
-      </div>
-      <button (click)="loadUsers()">Retry</button>
-    </div>
+    <app-error-panel [message]="error" (retry)="loadUsers()"></app-error-panel>
 
     <!-- Skeletons while loading -->
     <ul *ngIf="loading && !error" class="list">
@@ -82,7 +76,7 @@ import { FavouritesService } from './../services/favourites.service';
   styles: [`
     /* Layout */
     .list { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 8px; }
-    .list.small .row { padding: 6px 0; }
+
     .row { display: grid; grid-template-columns: 36px 1fr auto auto; gap: 8px; align-items: center; padding: 8px; border: 1px solid #eee; border-radius: 8px; }
     .name { font-weight: 500; }
     .avatar { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; background: #ddd; }
@@ -90,16 +84,7 @@ import { FavouritesService } from './../services/favourites.service';
     .col { display: grid; gap: 6px; }
     .muted { color: #666; }
 
-    /* Error panel */
-    .error { display: flex; justify-content: space-between; align-items: center; gap: 12px;
-             padding: 12px; border: 1px solid #f5c2c7; background: #f8d7da; color: #58151c;
-             border-radius: 8px; margin-bottom: 12px; }
-
-    /* Top loading bar */
-    .top-loader { height: 3px; width: 100%; background: linear-gradient(90deg,#9ec5fe,#86efac,#f8b4d9);
-                  animation: pulse 1.1s infinite ease-in-out; margin: 6px 0 12px; }
-    @keyframes pulse { 0% { opacity:.6 } 50% { opacity:1 } 100% { opacity:.6 } }
-
+   
     /* Skeletons */
     .skeleton { position: relative; overflow: hidden; background: #eee; }
     .line { height: 10px; border-radius: 6px; }
@@ -122,7 +107,7 @@ export class UserListComponent implements OnInit {
   constructor(
     private usersSvc: UserService,
     private favs: FavouritesService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadUsers(); // fetch or reuse cached users
